@@ -273,6 +273,23 @@ pub fn markdown_to_html(content: &str, context: &RenderContext) -> Result<Render
         cmark::html::push_html(&mut html, events.into_iter());
     }
 
+    let mut sectioned = false;
+    for ref header in headers.iter() {
+        let val = header.to_string(context.tera, context.insert_anchor);
+        if header.level == 2 {
+            let index = html.find(&val).expect(&format!("should have found {}", &val));
+            if !sectioned {
+                html.insert_str(index, "<section>");
+            } else {
+                html.insert_str(index, "</section><section>");
+            }
+            sectioned = true;
+        }
+    }
+    if sectioned {
+        html.push_str("</section>");
+    }
+
     if let Some(e) = error {
         return Err(e);
     } else {
